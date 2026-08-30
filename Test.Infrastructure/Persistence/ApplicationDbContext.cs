@@ -1,10 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
+using Test.Application.Exceptions;
+using Test.Application.Interfaces;
 using Test.Domain.Entities;
+using Test.Infrastructure.Identity;
 
 namespace Test.Infrastructure.Persistence
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>, IUnitOfWork
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
@@ -12,9 +16,8 @@ namespace Test.Infrastructure.Persistence
         }
 
         public DbSet<Room> Rooms => Set<Room>();
-        public DbSet<RoomService> RoomServices => Set<RoomService>();
+        public DbSet<TimeSlot> TimeSlots => Set<TimeSlot>();
         public DbSet<Booking> Bookings => Set<Booking>();
-        public DbSet<BookingService> BookingServices => Set<BookingService>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -23,16 +26,22 @@ namespace Test.Infrastructure.Persistence
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
         }
 
-        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             foreach (var entry in ChangeTracker.Entries<BaseEntity>())
             {
                 if (entry.State == EntityState.Modified)
-                {
                     entry.Entity.UpdatedAt = DateTime.UtcNow;
-                }
             }
-            return base.SaveChangesAsync(cancellationToken);
+
+            try
+            {
+                return await base.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                throw new ConcurrencyConflictException("The record was modified by another process before this change could be saved.", ex);
+            }
         }
     }
 }

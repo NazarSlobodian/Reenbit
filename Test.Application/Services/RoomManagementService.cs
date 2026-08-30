@@ -1,7 +1,10 @@
-﻿using Test.Application.DTOs.RoomManagement;
+﻿using Microsoft.Extensions.Options;
+
+using Test.Application.Common;
+using Test.Application.DTOs.RoomManagement;
+using Test.Application.Interfaces;
 using Test.Application.Interfaces.Repositories;
 using Test.Application.Interfaces.Services;
-
 using Test.Domain.Entities;
 
 namespace Test.Application.Services
@@ -9,34 +12,38 @@ namespace Test.Application.Services
     public class RoomManagementService : IRoomManagementService
     {
         private readonly IRoomRepository _roomRepository;
+        private readonly ITimeSlotRepository _timeSlotRepository;
+        private readonly ITimeSlotGenerator _timeSlotGenerator;
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly SlotGenerationOptions _slotOptions;
 
-        public RoomManagementService(IRoomRepository roomRepository)
+        public RoomManagementService(
+            IRoomRepository roomRepository,
+            ITimeSlotRepository timeSlotRepository,
+            ITimeSlotGenerator timeSlotGenerator,
+            IUnitOfWork unitOfWork,
+            IOptions<SlotGenerationOptions> slotOptions)
         {
             _roomRepository = roomRepository;
+            _timeSlotRepository = timeSlotRepository;
+            _timeSlotGenerator = timeSlotGenerator;
+            _unitOfWork = unitOfWork;
+            _slotOptions = slotOptions.Value;
         }
 
         public async Task<Guid> CreateRoomAsync(CreateRoomDto dto, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(dto.Name))
                 throw new ArgumentException("Room name cannot be empty.");
-            if (dto.Capacity <= 0)
-                throw new ArgumentException("Capacity must be greater than 0.");
-            if (dto.BasePricePerHour < 0)
-                throw new ArgumentException("Price cannot be negative.");
 
-            var room = new Room
-            {
-                Name = dto.Name,
-                Capacity = dto.Capacity,
-                BasePricePerHour = dto.BasePricePerHour,
-                Services = dto.Services.Select(s => new RoomService
-                {
-                    Name = s.Name,
-                    Price = s.Price
-                }).ToList()
-            };
-
+            var room = new Room { Name = dto.Name };
             await _roomRepository.AddAsync(room, cancellationToken);
+
+            var timeSlots = _timeSlotGenerator.GenerateForRoom(room.Id, DateTime.UtcNow.Date, _slotOptions);
+            await _timeSlotRepository.AddRangeAsync(timeSlots, cancellationToken);
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
             return room.Id;
         }
 
@@ -44,56 +51,14 @@ namespace Test.Application.Services
         {
             if (string.IsNullOrWhiteSpace(dto.Name))
                 throw new ArgumentException("Room name cannot be empty.");
-            if (dto.Capacity <= 0)
-                throw new ArgumentException("Capacity must be greater than 0.");
-            if (dto.BasePricePerHour < 0)
-                throw new ArgumentException("Price cannot be negative.");
 
             var room = await _roomRepository.GetByIdAsync(id, cancellationToken);
             if (room == null) throw new KeyNotFoundException($"Room with ID {id} was not found.");
 
             room.Name = dto.Name;
-            room.Capacity = dto.Capacity;
-            room.BasePricePerHour = dto.BasePricePerHour;
-
-            // Remove services that are in the DB but NOT in the incoming DTO
-            var incomingServiceIds = dto.Services
-                .Where(s => s.Id.HasValue)
-                .Select(s => s.Id!.Value)
-                .ToList();
-
-            var servicesToRemove = room.Services
-                .Where(s => !incomingServiceIds.Contains(s.Id))
-                .ToList();
-
-            foreach (var service in servicesToRemove)
-            {
-                room.Services.Remove(service);
-            }
-
-            // Update existing services and Add new ones
-            foreach (var serviceDto in dto.Services)
-            {
-                if (serviceDto.Id.HasValue)
-                {
-                    var existingService = room.Services.FirstOrDefault(s => s.Id == serviceDto.Id.Value);
-                    if (existingService != null)
-                    {
-                        existingService.Name = serviceDto.Name;
-                        existingService.Price = serviceDto.Price;
-                    }
-                }
-                else
-                {
-                    room.Services.Add(new RoomService
-                    {
-                        Name = serviceDto.Name,
-                        Price = serviceDto.Price
-                    });
-                }
-            }
 
             await _roomRepository.UpdateAsync(room, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
         public async Task DeleteRoomAsync(Guid id, CancellationToken cancellationToken = default)
@@ -102,28 +67,26 @@ namespace Test.Application.Services
             if (room == null) throw new KeyNotFoundException($"Room with ID {id} was not found.");
 
             await _roomRepository.DeleteAsync(room, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<IEnumerable<RoomDto>> SearchAvailableRoomsAsync(DateTime startTime, DateTime endTime, int capacity, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<RoomDto>> GetAllRoomsAsync(CancellationToken cancellationToken = default)
         {
-            if (startTime == default || endTime == default)
-                throw new ArgumentException("Both 'start' and 'end' dates must be provided.");
+            var rooms = await _roomRepository.GetAllAsync(cancellationToken);
+            return rooms.Select(r => new RoomDto(r.Id, r.Name));
+        }
 
-            if (startTime >= endTime)
-                throw new ArgumentException("'start' date must be earlier than 'end' date.");
+        public async Task<RoomDto> GetRoomByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var room = await _roomRepository.GetByIdAsync(id, cancellationToken);
+            if (room == null) throw new KeyNotFoundException($"Room with ID {id} was not found.");
+            return new RoomDto(room.Id, room.Name);
+        }
 
-            if (capacity <= 0)
-                throw new ArgumentException("'capacity' must be greater than 0.");
-
-            var rooms = await _roomRepository.GetAvailableRoomsAsync(startTime, endTime, capacity, cancellationToken);
-
-            return rooms.Select(r => new RoomDto(
-                r.Id,
-                r.Name,
-                r.Capacity,
-                r.BasePricePerHour,
-                r.Services.Select(s => new RoomServiceDto(s.Id, s.Name, s.Price)).ToList()
-            ));
+        public async Task<IEnumerable<TimeSlotDto>> GetScheduleAsync(Guid roomId, DateTime from, DateTime to, CancellationToken cancellationToken = default)
+        {
+            var timeSlots = await _timeSlotRepository.GetByRoomAsync(roomId, from, to, cancellationToken);
+            return timeSlots.Select(s => new TimeSlotDto(s.Id, s.StartTime, s.EndTime, s.Status));
         }
     }
 }

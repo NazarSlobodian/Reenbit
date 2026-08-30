@@ -1,6 +1,8 @@
 ﻿using System.Net;
 using System.Text.Json;
 
+using Test.Application.Exceptions;
+
 namespace Test.Presentation.Middlewares
 {
     public class ExceptionHandlingMiddleware
@@ -24,16 +26,17 @@ namespace Test.Presentation.Middlewares
 
                 context.Response.StatusCode = ex switch
                 {
-                    // 400 Bad Request: Invalid input data
+                    // 400 Bad Request: invalid input data
                     ArgumentException => (int)HttpStatusCode.BadRequest,
 
-                    // 404 Not Found: Resource doesn't exist
+                    // 404 Not Found: resource doesn't exist
                     KeyNotFoundException => (int)HttpStatusCode.NotFound,
 
-                    // 409 Conflict: Business rule violation (e.g., double booking)
-                    InvalidOperationException => (int)HttpStatusCode.Conflict,
+                    // 409 Conflict: time slot already booked / lost the concurrency race
+                    BookingConflictException => (int)HttpStatusCode.Conflict,
+                    ConcurrencyConflictException => (int)HttpStatusCode.Conflict,
 
-                    // 500 Internal Server Error: Unhandled crash
+                    // 500 Internal Server Error: unhandled crash
                     _ => (int)HttpStatusCode.InternalServerError
                 };
 

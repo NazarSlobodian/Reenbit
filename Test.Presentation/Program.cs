@@ -1,8 +1,7 @@
-using System.Reflection;
-
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Reflection;
 using Test.Infrastructure.Persistence;
-
 using Test.Presentation.Extensions;
 using Test.Presentation.Middlewares;
 
@@ -10,19 +9,20 @@ namespace Test.Presentation
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+                .ConfigureWarnings(w => w.Ignore(CoreEventId.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning)));
 
 
             // DI
             builder.Services.AddApplicationServices();
             builder.Services.AddInfrastructureServices();
-
+            builder.Services.BindConfigurations(builder.Configuration);
 
             // Controllers and Swagger
             builder.Services.AddControllers();
@@ -55,10 +55,10 @@ namespace Test.Presentation
 
             
             // Seed the database with initial data
-            app.SeedDatabase();
+            await app.SeedDatabaseAsync();
 
 
-            app.Run();
+            await app.RunAsync();
         }
     }
 }

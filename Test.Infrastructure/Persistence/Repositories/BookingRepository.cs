@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Test.Application.Interfaces.Repositories;
-
 using Test.Domain.Entities;
 
 namespace Test.Infrastructure.Persistence.Repositories
@@ -9,29 +8,28 @@ namespace Test.Infrastructure.Persistence.Repositories
     {
         private readonly ApplicationDbContext _context;
 
-        public BookingRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        public BookingRepository(ApplicationDbContext context) => _context = context;
 
         public async Task AddAsync(Booking booking, CancellationToken cancellationToken = default)
         {
             await _context.Bookings.AddAsync(booking, cancellationToken);
-
-            try
-            {
-                await _context.SaveChangesAsync(cancellationToken);
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                throw new InvalidOperationException("The room was just booked or modified by another user. Please try again.");
-            }
         }
 
-        public async Task<IEnumerable<Booking>> GetBookingsByDateRangeAsync(DateTime from, DateTime to, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<Booking>> GetByUserAsync(string userId, CancellationToken cancellationToken = default)
         {
             return await _context.Bookings
-                .Where(b => b.StartTime >= from && b.EndTime <= to)
+                .IgnoreQueryFilters()
+                .Include(b => b.TimeSlot)
+                .Where(b => b.UserId == userId)
+                .OrderBy(b => b.TimeSlot.StartTime)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<IEnumerable<Booking>> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.Bookings
+                .Include(b => b.TimeSlot)
+                .OrderBy(b => b.TimeSlot.StartTime)
                 .ToListAsync(cancellationToken);
         }
     }

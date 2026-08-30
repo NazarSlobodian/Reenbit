@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using Test.Domain.Entities;
+using Test.Infrastructure.Identity;
 
 namespace Test.Infrastructure.Persistence.Configuration
 {
@@ -10,14 +11,18 @@ namespace Test.Infrastructure.Persistence.Configuration
         public void Configure(EntityTypeBuilder<Booking> builder)
         {
             builder.HasKey(x => x.Id);
-            builder.Property(x => x.RoomPriceTotal).HasColumnType("decimal(18,2)");
-            builder.Property(x => x.ServicesPriceTotal).HasColumnType("decimal(18,2)");
-            builder.Property(x => x.TotalPrice).HasColumnType("decimal(18,2)");
 
-            builder.HasOne(x => x.Room)
-                   .WithMany(x => x.Bookings)
-                   .HasForeignKey(x => x.RoomId)
+            builder.HasOne(x => x.TimeSlot)
+                   .WithOne(x => x.Booking)
+                   .HasForeignKey<Booking>(x => x.TimeSlotId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne<ApplicationUser>()
+                   .WithMany()
+                   .HasForeignKey(x => x.UserId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasIndex(x => x.TimeSlotId).IsUnique();
         }
     }
 }

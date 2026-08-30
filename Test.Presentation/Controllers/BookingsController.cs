@@ -1,15 +1,18 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
 
-using Test.Application.DTOs.Bookings;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
 using Test.Application.Interfaces.Services;
 
 namespace Test.Presentation.Controllers
 {
     /// <summary>
-    /// Manages conference room bookings.
+    /// Manages meeting room bookings.
     /// </summary>
     [ApiController]
     [Route("api/bookings")]
+    [Authorize]
     public class BookingsController : ControllerBase
     {
         private readonly IBookingManagementService _bookingService;
@@ -20,12 +23,35 @@ namespace Test.Presentation.Controllers
         }
 
         /// <summary>
-        /// Creates a new booking and calculates the final price based on the selected time and services.
+        /// Books a specific available time slot for the current user.
         /// </summary>
-        [HttpPost]
-        public async Task<IActionResult> Book(CreateBookingDto dto)
+        [HttpPost("{timeSlotId:guid}")]
+        public async Task<IActionResult> Book(Guid timeSlotId, CancellationToken cancellationToken)
         {
-            var result = await _bookingService.CreateBookingAsync(dto);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var result = await _bookingService.CreateBookingAsync(timeSlotId, userId, cancellationToken);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Returns the current user's own bookings.
+        /// </summary>
+        [HttpGet("mine")]
+        public async Task<IActionResult> GetMine(CancellationToken cancellationToken)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var result = await _bookingService.GetMyBookingsAsync(userId, cancellationToken);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Admin only: returns every booking across all users.
+        /// </summary>
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        {
+            var result = await _bookingService.GetAllBookingsAsync(cancellationToken);
             return Ok(result);
         }
     }

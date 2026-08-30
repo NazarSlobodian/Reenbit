@@ -2,14 +2,9 @@
 {
     public class Booking : BaseEntity
     {
-        public Guid RoomId { get; set; }
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
-        public decimal RoomPriceTotal { get; set; }
-        public decimal ServicesPriceTotal { get; set; }
-        public decimal TotalPrice { get; set; }
+        public Guid TimeSlotId { get; set; }
+        public string UserId { get; set; } = string.Empty;
 
-        public Room? Room { get; set; }
-        public ICollection<BookingService> BookingServices { get; set; } = new List<BookingService>();
+        public TimeSlot TimeSlot { get; set; } = null!;
     }
 }
