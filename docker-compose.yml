@@ -1,0 +1,26 @@
+services:
+  test.presentation:
+    image: test-presentation-dev
+    build:
+      context: .
+      dockerfile: test.Presentation/Dockerfile
+    ports:
+      - "5140:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=ConferenceRoomDb;User Id=sa;Password=noProdPasswordHere123!;TrustServerCertificate=True;
+  
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: conference_db
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=noProdPasswordHere123!
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql 
+
+volumes:
+  sqlserver_data:
