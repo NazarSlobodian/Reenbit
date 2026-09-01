@@ -12,15 +12,18 @@ namespace Test.Application.Services
         private readonly IBookingRepository _bookingRepository;
         private readonly ITimeSlotRepository _timeSlotRepository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ITimeSlotNotifier _notifier;
 
         public BookingManagementService(
             IBookingRepository bookingRepository,
             ITimeSlotRepository timeSlotRepository,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            ITimeSlotNotifier notifier)
         {
             _bookingRepository = bookingRepository;
             _timeSlotRepository = timeSlotRepository;
             _unitOfWork = unitOfWork;
+            _notifier = notifier;
         }
 
         public async Task<BookingDto> CreateBookingAsync(Guid timeSlotId, string userId, CancellationToken cancellationToken = default)
@@ -46,7 +49,7 @@ namespace Test.Application.Services
                 throw new BookingConflictException("This time slot was just booked by another user.");
             }
 
-            // TODO: broadcast the time slot status change via SignalR once the notifier is wired up.
+            await _notifier.NotifyTimeSlotStatusChangedAsync(timeSlot.RoomId, timeSlot.Id, timeSlot.Status, cancellationToken);
 
             return new BookingDto(booking.Id, timeSlot.Id, timeSlot.RoomId, timeSlot.StartTime, timeSlot.EndTime, booking.UserId);
         }

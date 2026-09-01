@@ -4,6 +4,7 @@ using Test.Application.Interfaces.Repositories;
 using Test.Application.Interfaces.Services;
 using Test.Application.Services;
 using Test.Infrastructure.Identity;
+using Test.Infrastructure.Notifications;
 using Test.Infrastructure.Persistence;
 using Test.Infrastructure.Persistence.Repositories;
 
@@ -25,6 +26,12 @@ namespace Test.Presentation.Extensions
             services.AddScoped<IBookingRepository, BookingRepository>();
             services.AddScoped<ITimeSlotRepository, TimeSlotRepository>();
             services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
+
+            return services;
+        }
+        public static IServiceCollection AddPresentationServices(this IServiceCollection services)
+        {
+            services.AddScoped<ITimeSlotNotifier, SignalRTimeSlotNotifier>();
 
             return services;
         }

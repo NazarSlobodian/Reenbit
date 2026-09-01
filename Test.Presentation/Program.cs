@@ -1,16 +1,15 @@
-using System.Reflection;
-using System.Text;
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-
+using System.Reflection;
+using System.Text;
 using Test.Infrastructure.Identity;
 using Test.Infrastructure.Persistence;
 using Test.Presentation.Extensions;
+using Test.Presentation.Hubs;
 using Test.Presentation.Middlewares;
 
 namespace Test.Presentation
@@ -60,10 +59,20 @@ namespace Test.Presentation
 
             builder.Services.AddAuthorization();
 
+            // SignalR
+            var signalRBuilder = builder.Services.AddSignalR();
+
+            var azureSignalRConnectionString = builder.Configuration.GetConnectionString("AzureSignalR");
+            if (!string.IsNullOrWhiteSpace(azureSignalRConnectionString))
+            {
+                signalRBuilder.AddAzureSignalR(azureSignalRConnectionString);
+            }
+
             // DI
             builder.Services.AddApplicationServices();
             builder.Services.AddInfrastructureServices();
             builder.Services.AddIdentityServices();
+            builder.Services.AddPresentationServices();
             builder.Services.BindConfigurations(builder.Configuration);
 
             // Controllers and Swagger
@@ -116,7 +125,8 @@ namespace Test.Presentation
             app.UseAuthorization();
             app.MapControllers();
 
-            
+            app.MapHub<BookingHub>("/hubs/booking");
+
             // Seed the database with initial data
             await app.SeedDatabaseAsync();
 
