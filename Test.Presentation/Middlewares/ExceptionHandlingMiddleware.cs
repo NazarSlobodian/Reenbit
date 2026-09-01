@@ -29,6 +29,9 @@ namespace Test.Presentation.Middlewares
                     // 400 Bad Request: invalid input data
                     ArgumentException => (int)HttpStatusCode.BadRequest,
 
+                    // 401 Unauthorized: user not authenticated
+                    AuthenticationFailedException => (int)HttpStatusCode.Unauthorized,
+
                     // 404 Not Found: resource doesn't exist
                     KeyNotFoundException => (int)HttpStatusCode.NotFound,
 

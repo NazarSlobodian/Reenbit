@@ -3,6 +3,7 @@ using Test.Application.Interfaces;
 using Test.Application.Interfaces.Repositories;
 using Test.Application.Interfaces.Services;
 using Test.Application.Services;
+using Test.Infrastructure.Identity;
 using Test.Infrastructure.Persistence;
 using Test.Infrastructure.Persistence.Repositories;
 
@@ -31,6 +32,14 @@ namespace Test.Presentation.Extensions
         public static IServiceCollection BindConfigurations(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<SlotGenerationOptions>(configuration.GetSection("SlotGeneration"));
+            services.Configure<JwtSettings>(configuration.GetSection("Jwt"));
+            return services;
+        }
+
+        public static IServiceCollection AddIdentityServices(this IServiceCollection services)
+        {
+            services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ITokenService, TokenService>();
             return services;
         }
     }
