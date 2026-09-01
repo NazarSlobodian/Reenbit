@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 using Test.Application.Exceptions;
@@ -42,6 +43,13 @@ namespace Test.Infrastructure.Persistence
             {
                 throw new ConcurrencyConflictException("The record was modified by another process before this change could be saved.", ex);
             }
+            catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+            {
+                throw new ConcurrencyConflictException("A conflicting record already exists.", ex);
+            }
+
+            static bool IsUniqueConstraintViolation(DbUpdateException ex) =>
+                ex.InnerException is SqlException sqlEx && (sqlEx.Number == 2627 || sqlEx.Number == 2601);
         }
     }
 }
