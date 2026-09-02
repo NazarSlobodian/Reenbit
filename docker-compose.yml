@@ -11,6 +11,17 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=ConferenceRoomDb;User Id=sa;Password=noProdPasswordHere123!;TrustServerCertificate=True;
   
+  test.client:
+    image: test-client-dev
+    build:
+      context: ./test.client
+      dockerfile: Dockerfile
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./test.client:/app
+      - /app/node_modules
+
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: conference_db

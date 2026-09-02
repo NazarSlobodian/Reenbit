@@ -29,7 +29,7 @@ namespace Test.Presentation.Extensions
                 {
                     if (retry == maxRetries) throw;
                     Console.WriteLine($"Database not ready yet. Retrying {retry}/{maxRetries} in 3 seconds...");
-                    await Task.Delay(3000);
+                    await Task.Delay(5000);
                 }
             }
 
