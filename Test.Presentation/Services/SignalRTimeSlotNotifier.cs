@@ -4,7 +4,7 @@ using Test.Domain.Entities;
 using Test.Presentation.Hubs;
 using Test.Presentation.Hubs.Clients;
 
-namespace Test.Infrastructure.Notifications
+namespace Test.Presentation.Services
 {
     public class SignalRTimeSlotNotifier : ITimeSlotNotifier
     {
