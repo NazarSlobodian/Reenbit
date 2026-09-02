@@ -1,14 +1,11 @@
-:host {
-    max-width: 1280px;
-    padding: 2rem;
-    text-align: center;
+nav a, nav a:visited {
+  padding: 8px 12px;
+  text-decoration: none;
+  color: black;
 }
 
-th, td {
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
-table {
-    margin: 0 auto;
-}
+  nav a.active-link, nav a.active-link:visited {
+    font-weight: bold;
+    color: blue;
+    border-bottom: 2px solid blue;
+  }

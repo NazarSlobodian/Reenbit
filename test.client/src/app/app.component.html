@@ -1,3 +1,15 @@
-<h1 id="tableLabel">Hello</h1>
+<nav>
+  <ng-container *ngIf="authService.isLoggedIn">
+    <a routerLink="/rooms" routerLinkActive="active-link">Rooms</a>
+    <a routerLink="/bookings" routerLinkActive="active-link">My Bookings</a>
+    <a *ngIf="authService.isAdmin" routerLink="/admin/rooms" routerLinkActive="active-link">Admin</a>
+    <button (click)="logout()">Logout</button>
+  </ng-container>
 
-<p>This component demonstrates nothing (for now) </p>
+  <ng-container *ngIf="!authService.isLoggedIn">
+    <a routerLink="/auth/login" routerLinkActive="active-link">Login</a>
+    <a routerLink="/auth/register" routerLinkActive="active-link">Register</a>
+  </ng-container>
+</nav>
+
+<router-outlet></router-outlet>
