@@ -54,19 +54,29 @@ namespace Test.Application.Services
             return new BookingDto(booking.Id, timeSlot.Id, timeSlot.RoomId, timeSlot.StartTime, timeSlot.EndTime, booking.UserId);
         }
 
-        public async Task<IEnumerable<BookingDto>> GetMyBookingsAsync(string userId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<MyBookingDto>> GetMyBookingsAsync(string userId, CancellationToken cancellationToken = default)
         {
             var bookings = await _bookingRepository.GetByUserAsync(userId, cancellationToken);
-            return bookings.Select(ToDto);
+            return bookings.Select(b => new MyBookingDto(
+                b.Id,
+                b.TimeSlot.RoomId,
+                b.TimeSlot.Room?.Name ?? b.TimeSlot.RoomId.ToString(),
+                b.TimeSlot.StartTime,
+                b.TimeSlot.EndTime
+            ));
         }
 
-        public async Task<IEnumerable<BookingDto>> GetAllBookingsAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<AdminBookingDto>> GetAllBookingsAsync(CancellationToken cancellationToken = default)
         {
             var bookings = await _bookingRepository.GetAllAsync(cancellationToken);
-            return bookings.Select(ToDto);
+            return bookings.Select(b => new AdminBookingDto(
+                b.Id,
+                b.TimeSlot.RoomId,
+                b.TimeSlot.Room?.Name ?? b.TimeSlot.RoomId.ToString(),
+                b.TimeSlot.StartTime,
+                b.TimeSlot.EndTime,
+                b.UserId
+            ));
         }
-
-        private static BookingDto ToDto(Booking b) =>
-            new(b.Id, b.TimeSlotId, b.TimeSlot.RoomId, b.TimeSlot.StartTime, b.TimeSlot.EndTime, b.UserId);
     }
 }

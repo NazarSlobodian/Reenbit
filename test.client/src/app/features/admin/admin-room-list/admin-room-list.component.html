@@ -1,0 +1,13 @@
+<h2>Manage Rooms</h2>
+<a routerLink="new">+ New Room</a>
+<p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+
+<table>
+  <tr *ngFor="let room of rooms">
+    <td>{{ room.name }}</td>
+    <td>
+      <a [routerLink]="[room.id, 'edit']">Edit</a>
+      <button (click)="delete(room)">Delete</button>
+    </td>
+  </tr>
+</table>

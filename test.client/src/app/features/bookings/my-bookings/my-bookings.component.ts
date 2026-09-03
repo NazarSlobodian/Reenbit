@@ -1,27 +1,18 @@
 import { Component, OnInit } from '@angular/core';
-import { forkJoin, map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { BookingService } from '../../../core/services/booking.service';
-import { RoomService } from '../../../core/services/room.service';
+import { DeeperBooking } from '../../../core/models/booking/DeeperBooking';
 
-interface BookingRow { id: string; roomName: string; startTime: string; endTime: string; }
-
-@Component({ selector: 'app-my-bookings', templateUrl: './my-bookings.component.html' })
+@Component({
+  selector: 'app-my-bookings',
+  templateUrl: './my-bookings.component.html'
+})
 export class MyBookingsComponent implements OnInit {
-  bookings$!: Observable<BookingRow[]>;
+  bookings$!: Observable<DeeperBooking[]>;
 
-  constructor(private bookingService: BookingService, private roomService: RoomService) { }
+  constructor(private bookingService: BookingService) { }
 
   ngOnInit(): void {
-    this.bookings$ = forkJoin({
-      bookings: this.bookingService.getMine(),
-      rooms: this.roomService.getAll()
-    }).pipe(
-      map(({ bookings, rooms }) => bookings.map(b => ({
-        id: b.id,
-        roomName: rooms.find(r => r.id === b.roomId)?.name ?? b.roomId,
-        startTime: b.startTime,
-        endTime: b.endTime
-      })))
-    );
+    this.bookings$ = this.bookingService.getMine();
   }
 }

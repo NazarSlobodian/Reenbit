@@ -1,0 +1,11 @@
+<h2>{{ isEditMode ? 'Edit Room' : 'New Room' }}</h2>
+
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <input formControlName="name" placeholder="Room name" />
+  <button type="submit" [disabled]="form.invalid">Save</button>
+  <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+</form>
+
+<p *ngIf="!isEditMode">
+  A full 14-day slot schedule is generated automatically once the room is created.
+</p>

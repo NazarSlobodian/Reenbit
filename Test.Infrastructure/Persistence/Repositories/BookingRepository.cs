@@ -20,6 +20,7 @@ namespace Test.Infrastructure.Persistence.Repositories
             return await _context.Bookings
                 .IgnoreQueryFilters()
                 .Include(b => b.TimeSlot)
+                    .ThenInclude(ts => ts.Room)
                 .Where(b => b.UserId == userId)
                 .OrderBy(b => b.TimeSlot.StartTime)
                 .ToListAsync(cancellationToken);
@@ -28,7 +29,9 @@ namespace Test.Infrastructure.Persistence.Repositories
         public async Task<IEnumerable<Booking>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             return await _context.Bookings
+                .IgnoreQueryFilters()
                 .Include(b => b.TimeSlot)
+                   .ThenInclude(ts => ts.Room)
                 .OrderBy(b => b.TimeSlot.StartTime)
                 .ToListAsync(cancellationToken);
         }

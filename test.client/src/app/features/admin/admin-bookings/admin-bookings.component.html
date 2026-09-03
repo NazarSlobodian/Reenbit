@@ -1,0 +1,29 @@
+<h2>All Bookings</h2>
+
+<table *ngIf="(bookings$ | async) as bookings; else loading">
+  <tr *ngIf="bookings.length === 0">
+    <td colspan="3">No bookings yet.</td>
+  </tr>
+  <thead>
+    <tr *ngIf="bookings.length !== 0">
+      <th>Booking ID</th>
+      <th>Room ID</th>
+      <th>Room Name</th>
+      <th>Time</th>
+      <th>User ID</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let booking of bookings">
+      <td>{{ booking.id }}</td>
+      <td>{{ booking.roomId }}</td>
+      <td>{{ booking.roomName }}</td>
+      <td>{{ booking.startTime | date:'short' }} – {{ booking.endTime | date:'shortTime' }}</td>
+      <td>{{ booking.userId }}</td>
+    </tr>
+  </tbody>
+</table>
+
+<ng-template #loading>
+  <p>Loading…</p>
+</ng-template>

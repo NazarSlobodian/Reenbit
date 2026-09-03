@@ -2,7 +2,8 @@
   <ng-container *ngIf="authService.isLoggedIn">
     <a routerLink="/rooms" routerLinkActive="active-link">Rooms</a>
     <a routerLink="/bookings" routerLinkActive="active-link">My Bookings</a>
-    <a *ngIf="authService.isAdmin" routerLink="/admin/rooms" routerLinkActive="active-link">Admin</a>
+    <a *ngIf="authService.isAdmin" routerLink="/admin/rooms" routerLinkActive="active-link">Manage Rooms</a>
+    <a *ngIf="authService.isAdmin" routerLink="/admin/bookings" routerLinkActive="active-link">View All Bookings</a>
     <button (click)="logout()">Logout</button>
   </ng-container>
 

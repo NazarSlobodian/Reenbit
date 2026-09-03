@@ -3,6 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Booking } from '../models/booking/Booking';
+import { DeeperBooking } from '../models/booking/DeeperBooking';
+import { AdminBooking } from '../models/booking/AdminBooking';
 
 @Injectable({ providedIn: 'root' })
 export class BookingService {
@@ -14,11 +16,11 @@ export class BookingService {
     return this.http.post<Booking>(`${this.baseUrl}/${timeSlotId}`, null);
   }
 
-  getMine(): Observable<Booking[]> {
-    return this.http.get<Booking[]>(`${this.baseUrl}/mine`);
+  getMine(): Observable<DeeperBooking[]> {
+    return this.http.get<DeeperBooking[]>(`${this.baseUrl}/mine`);
   }
 
-  getAll(): Observable<Booking[]> {
-    return this.http.get<Booking[]>(this.baseUrl);
+  getAll(): Observable<AdminBooking[]> {
+    return this.http.get<AdminBooking[]>(this.baseUrl);
   }
 }
