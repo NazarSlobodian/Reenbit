@@ -5,6 +5,7 @@ import { TimeSlot } from '../../../core/models/rooms/TimeSlot';
 import { TimeSlotStatus } from '../../../core/models/rooms/TimeSlotStatus';
 import { RoomService } from '../../../core/services/room.service';
 import { BookingService } from '../../../core/services/booking.service';
+import { SignalRService } from '../../../core/services/signalr.service';
 
 @Component({
   selector: 'app-room-schedule',
@@ -20,12 +21,21 @@ export class RoomScheduleComponent implements OnInit, OnDestroy {
   constructor(
     private route: ActivatedRoute,
     private roomService: RoomService,
-    private bookingService: BookingService
+    private bookingService: BookingService,
+    private signalRService: SignalRService
   ) { }
 
   async ngOnInit(): Promise<void> {
     this.roomId = this.route.snapshot.paramMap.get('id')!;
     this.loadSchedule();
+
+    await this.signalRService.connect();
+    await this.signalRService.joinRoomGroup(this.roomId);
+
+    this.signalRSub = this.signalRService.timeSlotStatusChanged$.subscribe(event => {
+      const slot = this.slots.find(s => s.id === event.timeSlotId);
+      if (slot) slot.status = event.newStatus;
+    });
   }
 
   async ngOnDestroy(): Promise<void> {
