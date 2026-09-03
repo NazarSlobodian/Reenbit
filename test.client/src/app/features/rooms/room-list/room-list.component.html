@@ -1,0 +1,6 @@
+<h2>Rooms</h2>
+<ul>
+  <li *ngFor="let room of rooms$ | async">
+    <a [routerLink]="[room.id]">{{ room.name }}</a>
+  </li>
+</ul>

@@ -1,0 +1,14 @@
+<h2>Schedule</h2>
+<p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+
+<table>
+  <tr *ngFor="let slot of slots">
+    <td>{{ slot.startTime | date:'short' }} – {{ slot.endTime | date:'shortTime' }}</td>
+    <td>{{ slot.status === TimeSlotStatus.Available ? 'Available' : 'Booked' }}</td>
+    <td>
+      <button *ngIf="slot.status === TimeSlotStatus.Available" (click)="book(slot)">
+        Book
+      </button>
+    </td>
+  </tr>
+</table>
